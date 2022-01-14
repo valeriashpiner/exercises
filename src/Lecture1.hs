@@ -52,7 +52,7 @@ is 25.
 -}
 -- DON'T FORGET TO SPECIFY THE TYPE IN HERE
 sumOfSquares :: Int -> Int -> Int
-sumOfSquares x y = x^2 + y^2
+sumOfSquares x y = x * x + y * y
 
 {- | Implement a function that returns the last digit of a given number.
 
@@ -66,7 +66,7 @@ sumOfSquares x y = x^2 + y^2
 -}
 -- DON'T FORGET TO SPECIFY THE TYPE IN HERE
 lastDigit :: Int -> Int
-lastDigit n = if n < 0 then (-1 * n) `mod` 10 else n `mod` 10
+lastDigit n = abs (n) `mod` 10
 
 {- | Write a function that takes three numbers and returns the
 difference between the biggest number and the smallest one.
@@ -82,9 +82,9 @@ function.
 -}
 minmax :: Int -> Int -> Int -> Int
 minmax x y z = 
-    let min = minimum [x, y, z]
-        max = maximum [x, y, z]
-    in max - min
+    let minValue = minimum [x, y, z]
+        maxValue = maximum [x, y, z]
+    in maxValue - minValue
 
 {- | Implement a function that takes a string, start and end positions
 and returns a substring of a given string from the start position to
@@ -102,14 +102,11 @@ first character) and negative end position should result in an empty
 string.
 -}
 subString :: Int -> Int -> String -> String
-subString start end str = result start end str
-    where 
-        result :: Int -> Int -> String -> String
-        result start end str = 
+subString start end str = 
             if end < 0 then 
                 ""
             else if start < 0 then 
-                drop 0 (take (end + 1) str)
+                take (end + 1) str
             else drop start (take (end + 1) str)
 
 {- | Write a function that takes a String — space separated numbers,
@@ -122,10 +119,7 @@ The string contains only spaces and/or numbers.
 -}
 
 strSum :: String -> Int
-strSum str = 
-    let splittedWords = words str 
-        numbers = map read splittedWords
-    in sum numbers
+strSum str = sum (map read (words str))
 
 {- | Write a function that takes a number and a list of numbers and
 returns a string, saying how many elements of the list are strictly
