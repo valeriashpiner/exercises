@@ -367,17 +367,32 @@ Write a function that takes and expression and performs "Constant
 Folding" optimization on the given expression.
 -}
 -- constantFolding :: Expr -> Expr
--- constantFolding expr = resolve expr
+-- constantFolding expr =
+--   let (s, arr) = sumExpr expr in Add (Lit s) (sumVars arr)
 --   where
 --     sumExpr :: Expr -> (Int, [String])
 --     sumExpr exp =
 --       case expr of
 --         Lit lit -> (lit, [])
---         Var var -> (0, [var]
+--         Var var -> (0, [var])
+--         Add (Lit 0) (Lit 0) -> (0, [])
 --         Add (Lit lit1) (Lit lit2) -> (lit1 + lit2, [])
---         Add (Lit lit1) expr2 -> lit1 + sum expr
---         Add (Lit lit1) (Add () ()) -> expr
---         Add _ _ -> expr
+--         Add (Var var1) (Var var2) -> (0, [var1, var2])
+--         Add (Lit lit) (Var var) -> (lit, [var])
+--         Add (Var var) (Lit lit) -> (lit, [var])
+--         Add (Lit lit) expr2 ->
+--           let (s, arr) = sumExpr expr2 in (lit + s, arr)
+--         Add expr1 (Lit lit) ->
+--           let (s, arr) = sumExpr expr1 in (lit + s, arr)
+--         Add (Var var) expr2 ->
+--           let (s, arr) = sumExpr expr2 in (s, var:arr)
+--         Add expr1 (Var var) ->
+--           let (s, arr) = sumExpr expr1 in (s, var:arr)
 
+--     sumVars :: [String] -> Expr
+--     sumVars [] = Lit 0
+--     sumVars [a] = Var a
+--     sumVars [a, b] = Add (Var a) (Var b)
+--     sumVars (x:xs) = Add (Var x) (sumVars xs) 
 constantFolding :: Expr -> Expr
 constantFolding = error "TODO"
