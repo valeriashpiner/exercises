@@ -40,6 +40,7 @@ module Lecture2
     , constantFolding
     ) where
 
+import Data.Char(isSpace)
 {- | Implement a function that finds a product of all the numbers in
 the list. But implement a lazier version of this function: if you see
 zero, you can stop calculating product and return 0 immediately.
@@ -48,7 +49,9 @@ zero, you can stop calculating product and return 0 immediately.
 84
 -}
 lazyProduct :: [Int] -> Int
-lazyProduct = error "TODO"
+lazyProduct (0:_) = 0
+lazyProduct (x:xs) = x * lazyProduct xs
+lazyProduct [] = 1
 
 {- | Implement a function that duplicates every element in the list.
 
@@ -58,7 +61,8 @@ lazyProduct = error "TODO"
 "ccaabb"
 -}
 duplicate :: [a] -> [a]
-duplicate = error "TODO"
+duplicate [] = []
+duplicate (x:xs) =  x : x : duplicate xs
 
 {- | Implement function that takes index and a list and removes the
 element at the given position. Additionally, this function should also
@@ -70,7 +74,17 @@ return the removed element.
 >>> removeAt 10 [1 .. 5]
 (Nothing,[1,2,3,4,5])
 -}
-removeAt = error "TODO"
+removeAt :: Int -> [a] -> (Maybe a, [a])
+removeAt _ [] = (Nothing, [])
+removeAt 0 (x:xs) = (Just x, xs)
+removeAt index (x:xs)
+  | index >= length (x:xs) || index < 0 = (Nothing, (x:xs))
+  | otherwise = next [x] (index - 1) xs
+    where
+      next :: [a] -> Int -> [a] -> (Maybe a, [a])
+      next pre 0 (y:ys) = (Just y, (pre ++ ys))
+      next pre i (y:ys) = next (pre ++ [y]) (i - 1) ys
+
 
 {- | Write a function that takes a list of lists and returns only
 lists of even lengths.
@@ -81,7 +95,9 @@ lists of even lengths.
 ♫ NOTE: Use eta-reduction and function composition (the dot (.) operator)
   in this function.
 -}
-evenLists = error "TODO"
+evenLists :: [[a]] -> [[a]]
+evenLists = filter (even . length)
+
 
 {- | The @dropSpaces@ function takes a string containing a single word
 or number surrounded by spaces and removes all leading and trailing
@@ -97,7 +113,8 @@ spaces.
 
 🕯 HINT: look into Data.Char and Prelude modules for functions you may use.
 -}
-dropSpaces = error "TODO"
+dropSpaces :: [Char] -> [Char]
+dropSpaces = filter (not . isSpace)
 
 {- |
 
@@ -160,7 +177,39 @@ data Knight = Knight
     , knightEndurance :: Int
     }
 
+-- data Chest a = MkChest 
+--   {
+--     chestGold       :: Int
+--   , chestTreasure :: a
+--   }
+
+-- data Dragon
+--   = Red
+--   | Black
+--   | Green
+
+-- data DragonAttack = DragonAttack
+--     { dragonHealth    :: Int
+--     , dragonAttack    :: Int
+--     , dragonEndurance :: Int
+--     }
+
+-- experiencePoints :: Dragon -> Int
+-- experiencePoints dragon = case dragon of
+--   Red   -> 100
+--   Black -> 150
+--   Green -> 250
+
+-- rewards :: Dragon -> Chest a 
+-- rewards dragon = case dragon of
+--   Green -> MkChest 100 False
+--   Black -> MkChest 100 ("Armor")
+--   Red   -> MkChest 100 ("Sword")
+
+
 dragonFight = error "TODO"
+
+
 
 ----------------------------------------------------------------------------
 -- Extra Challenges
@@ -181,7 +230,11 @@ False
 True
 -}
 isIncreasing :: [Int] -> Bool
-isIncreasing = error "TODO"
+isIncreasing [] = True
+isIncreasing [_] = True
+isIncreasing (x:y:xs)
+  | x <= y = isIncreasing (y:xs)
+  | otherwise = False
 
 {- | Implement a function that takes two lists, sorted in the
 increasing order, and merges them into new list, also sorted in the
@@ -194,7 +247,12 @@ verify that.
 [1,2,3,4,7]
 -}
 merge :: [Int] -> [Int] -> [Int]
-merge = error "TODO"
+merge [] [] = []
+merge xs [] = xs
+merge [] ys = ys
+merge (x:xs) (y:ys) 
+  | x <= y = x : merge xs (y:ys)
+  | otherwise = y : merge (x:xs) ys
 
 {- | Implement the "Merge Sort" algorithm in Haskell. The @mergeSort@
 function takes a list of numbers and returns a new list containing the
@@ -211,7 +269,16 @@ The algorithm of merge sort is the following:
 [1,2,3]
 -}
 mergeSort :: [Int] -> [Int]
-mergeSort = error "TODO"
+mergeSort [] = []
+mergeSort [a] = [a]
+mergeSort [a, b] = if a <= b then [a,b] else [b,a]
+mergeSort arr = (sortAndMerge . split) arr
+  where
+    split :: [Int] -> ([Int], [Int])
+    split newArr = splitAt (length newArr `div` 2) newArr
+
+    sortAndMerge :: ([Int],[Int]) -> [Int]
+    sortAndMerge (arr1, arr2) = merge (mergeSort arr1) (mergeSort arr2)
 
 
 {- | Haskell is famous for being a superb language for implementing
@@ -231,7 +298,6 @@ data Expr
     deriving (Show, Eq)
 
 {- Now, you can use this data type to describe such expressions:
-
 > x + 1
 Add (Var "x") (Lit 1)
 
@@ -264,7 +330,20 @@ data EvalError
 It returns either a successful evaluation result or an error.
 -}
 eval :: Variables -> Expr -> Either EvalError Int
-eval = error "TODO"
+eval arr expr =
+  case expr of
+    Lit n -> Right n
+    Var v -> case lookup v arr of
+              Just value -> Right value
+              Nothing -> Left (VariableNotFound v)
+    Add e1 e2 ->
+          let r1 = eval arr e1
+              r2 = eval arr e2
+          in case (r1, r2) of
+                  (Left _, _) -> r1
+                  (_, Left _) -> r2
+                  (Right r1, Right r2) -> Right (r1 + r2)
+
 
 {- | Compilers also perform optimizations! One of the most common
 optimizations is "Constant Folding". It performs arithmetic operations
@@ -287,5 +366,33 @@ x + 45 + y
 Write a function that takes and expression and performs "Constant
 Folding" optimization on the given expression.
 -}
+-- constantFolding :: Expr -> Expr
+-- constantFolding expr =
+--   let (s, arr) = sumExpr expr in Add (Lit s) (sumVars arr)
+--   where
+--     sumExpr :: Expr -> (Int, [String])
+--     sumExpr exp =
+--       case expr of
+--         Lit lit -> (lit, [])
+--         Var var -> (0, [var])
+--         Add (Lit 0) (Lit 0) -> (0, [])
+--         Add (Lit lit1) (Lit lit2) -> (lit1 + lit2, [])
+--         Add (Var var1) (Var var2) -> (0, [var1, var2])
+--         Add (Lit lit) (Var var) -> (lit, [var])
+--         Add (Var var) (Lit lit) -> (lit, [var])
+--         Add (Lit lit) expr2 ->
+--           let (s, arr) = sumExpr expr2 in (lit + s, arr)
+--         Add expr1 (Lit lit) ->
+--           let (s, arr) = sumExpr expr1 in (lit + s, arr)
+--         Add (Var var) expr2 ->
+--           let (s, arr) = sumExpr expr2 in (s, var:arr)
+--         Add expr1 (Var var) ->
+--           let (s, arr) = sumExpr expr1 in (s, var:arr)
+
+--     sumVars :: [String] -> Expr
+--     sumVars [] = Lit 0
+--     sumVars [a] = Var a
+--     sumVars [a, b] = Add (Var a) (Var b)
+--     sumVars (x:xs) = Add (Var x) (sumVars xs) 
 constantFolding :: Expr -> Expr
 constantFolding = error "TODO"
